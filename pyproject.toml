@@ -1,0 +1,34 @@
+[project]
+name = "bh3scan"
+version = "0.1.0"
+description = ""
+dependencies = [
+    "typer>=0.15.2",
+    "click>=8.0, <8.2.0",
+    "platformdirs>=4.3.8",
+    "requests>=2.32.3",
+    "loguru>=0.7.3",
+    "cachetools>=5.5.2",
+    "pydantic>=2.11.4",
+    "pycryptodome>=3.22.0",
+    "pillow>=11.2.1",
+    "opencv-python>=4.11.0.86",
+    "pyzbar>=0.1.9",
+]
+readme = "README.md"
+requires-python = ">= 3.12"
+
+[project.scripts]
+bh3scan = "bh3scan.cli:main"
+
+[tool.ruff.lint]
+extend-select = [
+    "A",    # https://docs.astral.sh/ruff/rules/#flake8-builtins-a
+    "B006", #https://docs.astral.sh/ruff/rules/mutable-argument-default/
+    "I",    #https://docs.astral.sh/ruff/rules/#isort-i
+    "INP",  #https://docs.astral.sh/ruff/rules/#flake8-no-pep420-inp
+]
+
+
+[tool.uv]
+package = true
