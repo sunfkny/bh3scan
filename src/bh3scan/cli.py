@@ -74,17 +74,24 @@ def check_ticket(ticket: str):
     return ticket
 
 
-def get_qr_from_clipboard():
+def get_qr_from_clipboard(max_attempts: int = 60):
     img = ImageGrab.grabclipboard()
     if img is None or isinstance(img, list):
         logger.warning("No image found in clipboard, grab from screen")
         img = ImageGrab.grab()
-    results: list[ZbarDecodedProtocol | zbar.Decoded] = zbar.decode(img)
-    logger.debug(f"{results=}")
-    for qr_data in results:
-        if qr_data.data.startswith(b"https://user.mihoyo.com/qr_code_in_game.html"):
-            return qr_data.data.decode("utf8")
-    return None
+    attempts = 0
+    while attempts < max_attempts:
+        results: list[ZbarDecodedProtocol] = zbar.decode(img)
+        logger.debug(f"{results=}")
+        for qr_data in results:
+            if qr_data.data.startswith(b"https://user.mihoyo.com/qr_code_in_game.html"):
+                return qr_data.data.decode("utf8")
+        logger.info("Waiting for QR code on screen")
+        time.sleep(1)
+        img = ImageGrab.grab()
+        attempts += 1
+    logger.error("Maximum attempts reached, QR code not found")
+    raise QRCodeExpiredError("Failed to retrieve QR code from clipboard or screen")
 
 
 @app.command(no_args_is_help=True)
@@ -139,11 +146,8 @@ def scan(
     logger.debug(f"{sys.argv=}")
     logger.debug(f"{ticket=} {account=}")
 
-    if clipboard:
-        qr_from_clipboard = get_qr_from_clipboard()
-        if not qr_from_clipboard:
-            raise Bh3ScanBaseError("No QR code found in clipboard")
-        ticket = qr_from_clipboard
+    if not ticket and clipboard:
+        ticket = get_qr_from_clipboard()
 
     ticket = check_ticket(ticket)
 
