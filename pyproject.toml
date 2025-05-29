@@ -16,7 +16,8 @@ dependencies = [
     "pyzbar>=0.1.9",
 ]
 readme = "README.md"
-requires-python = ">= 3.12"
+requires-python = ">= 3.12, <= 3.13"
+
 
 [project.scripts]
 bh3scan = "bh3scan.cli:main"
@@ -32,3 +33,4 @@ extend-select = [
 
 [tool.uv]
 package = true
+environments = ["sys_platform == 'win32'"]
