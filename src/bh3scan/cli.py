@@ -25,7 +25,7 @@ from bh3scan.errors import (
 from . import bsgamesdk, mihoyosdk, scannersdk
 
 dirs = PlatformDirs(appname="bh3scan", appauthor="sunfkny")
-app = typer.Typer(no_args_is_help=True)
+app = typer.Typer()
 
 
 class ZbarDecodedProtocol(typing.Protocol):
@@ -94,7 +94,7 @@ def get_qr_from_clipboard(max_attempts: int = 60):
     raise QRCodeExpiredError("Failed to retrieve QR code from clipboard or screen")
 
 
-@app.command(no_args_is_help=True)
+@app.command()
 def scan(
     ticket: Annotated[
         str,
@@ -102,14 +102,6 @@ def scan(
             help="QR code ticket",
         ),
     ] = "",
-    clipboard: Annotated[
-        bool,
-        typer.Option(
-            "--clipboard",
-            "-c",
-            help="Get QR code from clipboard",
-        ),
-    ] = False,
     account: Annotated[
         str,
         typer.Option(
@@ -140,13 +132,11 @@ def scan(
         dirs.user_log_path / "debug.log",
         level=logging.DEBUG,
     )
-    if not ticket and not clipboard:
-        ticket = input("Please input ticket: ")
 
     logger.debug(f"{sys.argv=}")
     logger.debug(f"{ticket=} {account=}")
 
-    if not ticket and clipboard:
+    if not ticket:
         ticket = get_qr_from_clipboard()
 
     ticket = check_ticket(ticket)
@@ -260,3 +250,4 @@ def main():
         sys.exit(1)
     except Exception:
         logger.exception("Unhandled exception")
+        sys.exit(1)
