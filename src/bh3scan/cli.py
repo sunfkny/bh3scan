@@ -131,6 +131,8 @@ def scan(
     logger.add(
         dirs.user_log_path / "debug.log",
         level=logging.DEBUG,
+        rotation="1 days",
+        retention="7 days",
     )
 
     logger.debug(f"{sys.argv=}")
