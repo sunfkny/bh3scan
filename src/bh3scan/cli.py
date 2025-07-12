@@ -174,6 +174,9 @@ def scan(
 
         try:
             login_data = LoginData.model_validate_json(login_cache_file_content)
+        except AccessTokenExpiredError as e:
+            logger.error(e)
+            login_cache_file.unlink(missing_ok=True)
         except pydantic.ValidationError as e:
             logger.error(e)
             logger.warning("Invalid login cache file")
