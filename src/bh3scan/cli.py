@@ -136,7 +136,8 @@ def scan(
     )
 
     logger.debug(f"{sys.argv=}")
-    logger.debug(f"{ticket=} {account=}")
+    masked_password = "*" * len(password)
+    logger.debug(f"{ticket=} {account=} password={masked_password!r}")
 
     if not ticket:
         ticket = get_qr_from_clipboard()
