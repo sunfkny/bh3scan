@@ -38,16 +38,11 @@ def bh3_sign_dict(data: dict):
 
 @ttl_cache(ttl=60)
 def get_bh3_version():
-    r = requests.get(
-        "https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGamePackages",
-        params={
-            "game_ids[]": "osvnlOc0S8",
-            "launcher_id": "jGHBHlcOq1",
-        },
-    )
+    # https://m.miyoushe.com/bh3/#/gameCenter/14
+    r = requests.get("https://bbs-api.miyoushe.com/reception/wapi/gameDetail?id=14")
     logger.debug(f"{r.status_code=} {r.text=}")
     r.raise_for_status()
-    version: str = r.json()["data"]["game_packages"][0]["main"]["major"]["version"]
+    version: str = r.json()["data"]["item"]["config"]["pkg"]["pkg_version"]
     return version
 
 
