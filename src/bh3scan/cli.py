@@ -13,6 +13,7 @@ import typer
 from loguru import logger
 from PIL import ImageGrab
 from platformdirs import PlatformDirs
+from pyzbar.pyzbar import ZBarSymbol
 from requests import HTTPError
 
 from bh3scan.errors import (
@@ -81,7 +82,9 @@ def get_qr_from_clipboard(max_attempts: int = 60):
         img = ImageGrab.grab()
     attempts = 0
     while attempts < max_attempts:
-        results: list[ZbarDecodedProtocol] = zbar.decode(img)
+        results: list[ZbarDecodedProtocol] = zbar.decode(
+            img, symbols=[ZBarSymbol.QRCODE]
+        )
         logger.debug(f"{results=}")
         for qr_data in results:
             if qr_data.data.startswith(b"https://user.mihoyo.com/qr_code_in_game.html"):
