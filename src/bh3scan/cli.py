@@ -126,13 +126,15 @@ def scan(
 ):
     if not debug:
         logger.remove()
-        logger.add(sys.stderr, level=logging.INFO)
+        logger.add(sys.stderr, level=logging.INFO, backtrace=False, diagnose=False)
     dirs.user_log_path.mkdir(parents=True, exist_ok=True)
     logger.add(
         dirs.user_log_path / "debug.log",
         level=logging.DEBUG,
         rotation="1 days",
         retention="7 days",
+        backtrace=False,
+        diagnose=False,
     )
 
     logger.debug(f"{sys.argv=}")
