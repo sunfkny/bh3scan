@@ -1,6 +1,7 @@
 import getpass
 import json
 import logging
+import math
 import sys
 import time
 import typing
@@ -75,13 +76,13 @@ def check_ticket(ticket: str):
     return ticket
 
 
-def get_qr_from_clipboard(max_attempts: int = 60):
+def get_qr_from_clipboard():
     img = ImageGrab.grabclipboard()
     if img is None or isinstance(img, list):
         logger.warning("No image found in clipboard, grab from screen")
         img = ImageGrab.grab()
-    attempts = 0
-    while attempts < max_attempts:
+    start = time.monotonic()
+    while True:
         results: list[ZbarDecodedProtocol] = zbar.decode(
             img, symbols=[ZBarSymbol.QRCODE]
         )
@@ -89,12 +90,11 @@ def get_qr_from_clipboard(max_attempts: int = 60):
         for qr_data in results:
             if qr_data.data.startswith(b"https://user.mihoyo.com/qr_code_in_game.html"):
                 return qr_data.data.decode("utf8")
-        logger.info("Waiting for QR code on screen")
-        time.sleep(1)
+        elapsed = time.monotonic() - start
+        delay = min(300, 0.1 * 2 ** (elapsed / (60 / math.log2(10))))
+        logger.info(f"Waiting {delay:.2f} seconds for QR code on screen")
+        time.sleep(delay)
         img = ImageGrab.grab()
-        attempts += 1
-    logger.error("Maximum attempts reached, QR code not found")
-    raise QRCodeExpiredError("Failed to retrieve QR code from clipboard or screen")
 
 
 @app.command()
