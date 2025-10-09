@@ -1,0 +1,7 @@
+id: no-venv-logger
+severity: error
+language: python
+message: Do not import logger from venv, use loguru instead
+rule:
+  pattern: from venv import logger
+fix: from loguru import logger
