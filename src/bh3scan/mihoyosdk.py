@@ -3,11 +3,11 @@ import hmac
 import json
 import time
 
-import requests
 from cachetools.func import ttl_cache
 from loguru import logger
 
 from bh3scan.errors import QRCodeExpiredError, RequestError
+from bh3scan.request import session
 
 
 def bh3_sign(data: str):
@@ -39,8 +39,7 @@ def bh3_sign_dict(data: dict):
 @ttl_cache(ttl=60)
 def get_bh3_version():
     # https://m.miyoushe.com/bh3/#/gameCenter/14
-    r = requests.get("https://bbs-api.miyoushe.com/reception/wapi/gameDetail?id=14")
-    logger.debug(f"{r.status_code=} {r.text=}")
+    r = session.get("https://bbs-api.miyoushe.com/reception/wapi/gameDetail?id=14")
     r.raise_for_status()
     version: str = r.json()["data"]["item"]["config"]["pkg"]["pkg_version"]
     return version
@@ -55,11 +54,10 @@ def qrcode_scan(ticket: str):
     }
     body = bh3_sign_dict(body)
 
-    r = requests.post(
+    r = session.post(
         "https://api-sdk.mihoyo.com/bh3_cn/combo/panda/qrcode/scan",
         json=body,
     )
-    logger.debug(f"{r.status_code=} {r.text=}")
     r.raise_for_status()
     retcode = r.json()["retcode"]
     if retcode != 0:
@@ -74,14 +72,9 @@ def qrcode_fetch(device: str):
         "app_id": "1",
         "device": device,
     }
-    r = requests.post(
+    r = session.post(
         "https://api-sdk.mihoyo.com/bh3_cn/combo/panda/qrcode/fetch",
         json=body,
-    )
-    logger.debug(
-        "status code: {} content: {}",
-        r.status_code,
-        r.text.encode().decode("unicode_escape"),
     )
     r.raise_for_status()
     if r.json()["retcode"] != 0:
@@ -97,11 +90,10 @@ def qrcode_query(ticket: str, device: str):
         "ticket": ticket,
         "device": device,
     }
-    r = requests.post(
+    r = session.post(
         "https://api-sdk.mihoyo.com/bh3_cn/combo/panda/qrcode/query",
         json=body,
     )
-    logger.debug(f"{r.status_code=} {r.text=}")
     r.raise_for_status()
     if r.json()["retcode"] != 0:
         raise RequestError(r.text)
@@ -155,11 +147,10 @@ def qrcode_confirm(
         },
     }
     scan_result = bh3_sign_dict(scan_result)
-    r = requests.post(
+    r = session.post(
         "https://api-sdk.mihoyo.com/bh3_cn/combo/panda/qrcode/confirm",
         json=scan_result,
     )
-    logger.debug(f"{r.status_code=} {r.text=}")
     r.raise_for_status()
     if r.json()["retcode"] != 0:
         raise RequestError(r.text)
@@ -178,11 +169,10 @@ def combo_login(uid: int, access_key: str):
         ),
     }
     body = bh3_sign_dict(body)
-    r = requests.post(
+    r = session.post(
         "https://api-sdk.mihoyo.com/bh3_cn/combo/granter/login/v2/login",
         json=body,
     )
-    logger.debug(f"{r.status_code=} {r.text=}")
     r.raise_for_status()
     if r.json()["retcode"] != 0:
         raise RequestError(r.text)

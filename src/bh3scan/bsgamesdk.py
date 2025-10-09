@@ -3,10 +3,10 @@ import hashlib
 import time
 import webbrowser
 
-import requests
 from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
 from Crypto.PublicKey import RSA
-from loguru import logger
+
+from bh3scan.request import session
 
 
 def rsacreate(message: str, public_key):
@@ -39,9 +39,8 @@ def send_bili_post(url, data: dict) -> dict:
         "Content-Type": "application/x-www-form-urlencoded",
     }
 
-    r = requests.post(url=url, data=data, headers=header)
+    r = session.post(url=url, data=data, headers=header)
     r.raise_for_status()
-    logger.debug(f"{url=} {r.status_code=} {r.text=}")
     return r.json()
 
 

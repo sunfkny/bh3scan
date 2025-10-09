@@ -86,13 +86,13 @@ def get_qr_from_clipboard():
         results: list[ZbarDecodedProtocol] = zbar.decode(
             img, symbols=[ZBarSymbol.QRCODE]
         )
-        logger.debug(f"{results=}")
+        logger.trace(f"{results=}")
         for qr_data in results:
             if qr_data.data.startswith(b"https://user.mihoyo.com/qr_code_in_game.html"):
                 return qr_data.data.decode("utf8")
         elapsed = time.monotonic() - start
         delay = min(300, 0.1 * 2 ** (elapsed / (60 / math.log2(10))))
-        logger.info(f"Waiting {delay:.2f} seconds for QR code on screen")
+        logger.trace(f"Waiting {delay:.2f} seconds for QR code on screen")
         time.sleep(delay)
         img = ImageGrab.grab()
 
@@ -144,14 +144,14 @@ def scan(
     masked_password = "*" * len(password)
     logger.debug(f"{ticket=} {account=} password={masked_password!r}")
 
+    version = mihoyosdk.get_bh3_version()
+
+    dispatch = scannersdk.get_query_dispatch(version)
+
     if not ticket:
         ticket = get_qr_from_clipboard()
 
     ticket = check_ticket(ticket)
-
-    version = mihoyosdk.get_bh3_version()
-
-    dispatch = scannersdk.get_query_dispatch(version)
 
     # step 1: use cache to get access key
     login_data: LoginData | None = None
