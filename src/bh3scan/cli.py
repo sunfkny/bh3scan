@@ -154,6 +154,7 @@ def scan(
     ticket = check_ticket(ticket)
 
     # step 1: use cache to get access key
+    logger.info("[1/6] Checking cached login status")
     login_data: LoginData | None = None
     dirs.user_data_path.mkdir(parents=True, exist_ok=True)
     if not account:
@@ -192,6 +193,7 @@ def scan(
     if login_data is None:
         if not password:
             password = getpass.getpass(f"Password for {account}: ")
+        logger.info("[2/6] Logging in to BiliBili")
         login_response = bsgamesdk.login(account, password)
         try:
             login_data = LoginData.model_validate(login_response)
@@ -201,7 +203,10 @@ def scan(
 
         # save login cache
         login_cache_file.write_text(json.dumps(login_response), encoding="utf8")
+    else:
+        logger.info("[2/6] Using cached login status")
 
+    logger.info("[3/6] Getting user info")
     user_info_response = bsgamesdk.get_user_info(login_data.uid, login_data.access_key)
     try:
         user_info = UserInfo.model_validate(user_info_response)
@@ -209,6 +214,7 @@ def scan(
         logger.error(e)
         raise Bh3ScanBaseError(f"Invalid user_info response {user_info_response}")
 
+    logger.info("[4/6] Connecting to game server")
     # step 3: use access key to scan
     combo_login_response = mihoyosdk.combo_login(
         uid=login_data.uid,
@@ -221,9 +227,11 @@ def scan(
         logger.error(f"Invalid combo login response {combo_login_response}")
         sys.exit(1)
 
+    logger.info("[5/6] Sending QR code")
     try:
         mihoyosdk.qrcode_scan(ticket)
     except QRCodeExpiredError:
+        logger.error("QR code expired, please input a new ticket")
         while True:
             try:
                 ticket = input("Ticket: ")
@@ -240,6 +248,7 @@ def scan(
                 logger.error(e)
                 continue
 
+    logger.info("[6/6] Confirming login")
     mihoyosdk.qrcode_confirm(
         asterisk_name=user_info.uname,
         open_id=combo_login_data.open_id,
