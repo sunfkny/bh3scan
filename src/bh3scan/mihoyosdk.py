@@ -3,7 +3,6 @@ import hmac
 import json
 import time
 
-from cachetools.func import ttl_cache
 from loguru import logger
 
 from bh3scan.errors import QRCodeExpiredError, RequestError
@@ -36,7 +35,6 @@ def bh3_sign_dict(data: dict):
     return data
 
 
-@ttl_cache(ttl=60)
 def get_bh3_version():
     # https://m.miyoushe.com/bh3/#/gameCenter/14
     r = session.get("https://bbs-api.miyoushe.com/reception/wapi/gameDetail?id=14")

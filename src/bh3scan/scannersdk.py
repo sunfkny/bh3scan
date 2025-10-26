@@ -1,13 +1,10 @@
 import time
 
-from cachetools.func import ttl_cache
-
 from bh3scan.errors import RequestError
 from bh3scan.mihoyosdk import bh3_sign
 from bh3scan.request import session
 
 
-@ttl_cache(ttl=60)
 def get_query_dispatch(version: str):
     openid = 0
     timestamp = int(time.time())

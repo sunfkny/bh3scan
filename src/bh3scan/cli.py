@@ -15,7 +15,6 @@ from loguru import logger
 from PIL import ImageGrab
 from platformdirs import PlatformDirs
 from pyzbar.pyzbar import ZBarSymbol
-from requests import HTTPError
 
 from bh3scan.errors import (
     AccessTokenExpiredError,
@@ -144,8 +143,10 @@ def scan(
     masked_password = "*" * len(password)
     logger.debug(f"{ticket=} {account=} password={masked_password!r}")
 
+    logger.info("Getting game version")
     version = mihoyosdk.get_bh3_version()
 
+    logger.info("Getting dispatch")
     dispatch = scannersdk.get_query_dispatch(version)
 
     if not ticket:
@@ -265,9 +266,6 @@ def main():
     except Bh3ScanBaseError as e:
         logger.error(e)
         sys.exit(1)
-    except HTTPError as e:
+    except Exception as e:
         logger.error(e)
-        sys.exit(1)
-    except Exception:
-        logger.exception("Unhandled exception")
         sys.exit(1)
