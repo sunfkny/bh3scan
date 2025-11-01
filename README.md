@@ -1,11 +1,13 @@
 # bh3scan
 
 ## Installation
+
 ```shell
-uv tool install https://github.com/sunfkny/bh3scan.git
+cargo install --git https://github.com/sunfkny/bh3scan.git bh3scan
 ```
 
 ## Usage
+
 ```shell
 # Get QR code image from clipboard or screen
 bh3scan
