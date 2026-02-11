@@ -2,6 +2,30 @@
 resolver = "3"
 members = ["crates/*"]
 
+[workspace.dependencies]
+base64 = "0.22.1"
+hex = "0.4.3"
+hmac = "0.12.1"
+log = "0.4.28"
+md-5 = "0.10.6"
+rand = "0.10"
+reqwest = { version = "0.12.24", features = ["json"] }
+rsa = "0.10.0-rc.15"
+serde = "1.0.228"
+serde_json = { version = "1.0.145", features = ["preserve_order"] }
+sha2 = "0.10.9"
+thiserror = "2.0.17"
+tokio = { version = "1.48.0", features = ["full"] }
+clap = { version = "4.3.26", features = ["derive", "env"] }
+rpassword = "7.0.1"
+image = "0.24"
+arboard = "2.1"
+rqrr = "0.5"
+scrap = "0.5"
+directories = "4.0"
+log4rs = "1.4.0"
+url = "2.5.0"
+
 [profile.dev]
 opt-level = 0
 

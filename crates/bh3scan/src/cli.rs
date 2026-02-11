@@ -15,6 +15,7 @@ use std::io::{self, Write};
 use std::thread::sleep;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use thiserror::Error;
+use url::Url;
 
 #[derive(Debug, Deserialize)]
 struct LoginResponse {
@@ -353,23 +354,24 @@ fn decode_qr_from_bgra(buf: &[u8], width: u32, height: u32) -> Option<String> {
 
     let mut prepared = PreparedImage::prepare(gray);
     let grids = prepared.detect_grids();
-    for grid in grids {
-        if let Ok((_meta, content)) = grid.decode() {
-            let s = content;
-            if s.starts_with("https://user.mihoyo.com/qr_code_in_game.html") {
-                if let Some(pos) = s.find("ticket=") {
-                    let val = &s[pos + "ticket=".len()..];
-                    let val = val.split('&').next().unwrap_or("");
-                    if !val.is_empty() {
-                        return Some(val.to_string());
-                    }
-                }
-                return Some(s);
-            } else {
-                return Some(s);
-            }
-        }
+    grids
+        .into_iter()
+        .filter_map(|grid| grid.decode().ok())
+        .filter_map(|(_meta, content)| extract_ticket(content))
+        .next()
+}
+
+fn extract_ticket(s: String) -> Option<String> {
+    if !s.starts_with("https://user.mihoyo.com/qr_code_in_game.html") {
+        return None;
     }
 
+    let url = Url::parse(&s).ok()?;
+    let query = url.query_pairs();
+    for (k, v) in query {
+        if k == "ticket" {
+            return Some(v.to_string());
+        }
+    }
     None
 }
