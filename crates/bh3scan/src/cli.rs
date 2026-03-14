@@ -286,7 +286,8 @@ fn get_qr_from_screen() -> Result<Option<String>, CliError> {
             Err(e) => warn!("Failed to create capturer: {}", e),
         }
     }
-    info!("Created {} capturers", capturers.len());
+    debug!("Created {} capturers", capturers.len());
+    info!("Waiting for QR code on screen...");
 
     if capturers.is_empty() {
         warn!("No valid screen capturers created");
