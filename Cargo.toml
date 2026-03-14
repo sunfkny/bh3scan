@@ -26,6 +26,7 @@ scrap = "0.5"
 directories = "6.0"
 log4rs = "1.4.0"
 url = "2.5.0"
+webbrowser = "1.0"
 
 [profile.dev]
 opt-level = 0

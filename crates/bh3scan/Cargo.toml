@@ -26,3 +26,4 @@ scrap = { workspace = true }
 directories = { workspace = true }
 log4rs = { workspace = true }
 url = { workspace = true }
+webbrowser = { workspace = true }

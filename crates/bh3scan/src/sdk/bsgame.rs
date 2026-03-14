@@ -504,6 +504,9 @@ impl BsGameSDK {
                 );
 
                 println!("Please open this URL in your browser: {}", url);
+                if webbrowser::open(&url).is_err() {
+                    warn!("Failed to open browser automatically");
+                }
 
                 print!("validate: ");
                 io::stdout().flush()?;
