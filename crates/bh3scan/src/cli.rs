@@ -7,7 +7,6 @@ use directories::ProjectDirs;
 use image::{GrayImage, ImageBuffer};
 use log::{debug, info, warn};
 use rpassword::read_password;
-use rqrr::PreparedImage;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::fs;
@@ -16,6 +15,7 @@ use std::thread::sleep;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 use url::Url;
+use zedbar::{Image, Scanner};
 
 #[derive(Debug, Deserialize)]
 struct LoginResponse {
@@ -351,13 +351,18 @@ fn decode_qr_from_bgra(buf: &[u8], width: u32, height: u32) -> Option<String> {
     }
 
     let gray: GrayImage = ImageBuffer::from_raw(width, height, luma)?;
+    let (img_width, img_height) = gray.dimensions();
 
-    let mut prepared = PreparedImage::prepare(gray);
-    let grids = prepared.detect_grids();
-    grids
+    let mut zedbar_img = Image::from_gray(gray.as_raw(), img_width, img_height).ok()?;
+    let mut scanner = Scanner::new();
+    let symbols = scanner.scan(&mut zedbar_img);
+    symbols
         .into_iter()
-        .filter_map(|grid| grid.decode().ok())
-        .filter_map(|(_meta, content)| extract_ticket(content))
+        .filter_map(|symbol| {
+            symbol
+                .data_string()
+                .and_then(|s| extract_ticket(s.to_string()))
+        })
         .next()
 }
 

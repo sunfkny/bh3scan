@@ -21,7 +21,7 @@ clap = { workspace = true }
 rpassword = { workspace = true }
 image = { workspace = true }
 arboard = { workspace = true }
-rqrr = { workspace = true }
+zedbar = { workspace = true }
 scrap = { workspace = true }
 directories = { workspace = true }
 log4rs = { workspace = true }
