@@ -1,14 +1,25 @@
 use log::info;
+use std::error::Error;
 
 mod cli;
 mod formatter;
 mod logger;
 mod sdk;
 
+pub fn print_error(err: &dyn Error) {
+    eprintln!("Error: {}", err);
+
+    let mut current = err;
+    while let Some(source) = current.source() {
+        eprintln!("  Caused by: {}", source);
+        current = source;
+    }
+}
+
 #[tokio::main]
 async fn main() {
     if let Err(e) = cli::run().await {
-        eprintln!("Error: {}", e);
+        print_error(&e);
         std::process::exit(1);
     }
     info!("Done");
