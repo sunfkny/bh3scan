@@ -3,6 +3,12 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.dependencies]
+bh3scan-sign = { path = "crates/bh3scan-sign" }
+bh3scan-mihoyo = { path = "crates/bh3scan-mihoyo" }
+bh3scan-scanner = { path = "crates/bh3scan-scanner" }
+bh3scan-bsgame = { path = "crates/bh3scan-bsgame" }
+bh3scan-logger = { path = "crates/bh3scan-logger" }
+
 base64 = "0.22.1"
 hex = "0.4.3"
 hmac = { version = "0.13.0-rc.5" }

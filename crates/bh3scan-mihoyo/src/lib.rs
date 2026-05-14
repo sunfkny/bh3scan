@@ -1,4 +1,4 @@
-use crate::sdk::sign::bh3_sign_dict;
+use bh3scan_sign::sign::bh3_sign_dict;
 use log::debug;
 use serde::Deserialize;
 use std::time::{SystemTime, UNIX_EPOCH};

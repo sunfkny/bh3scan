@@ -1,0 +1,13 @@
+[package]
+name = "bh3scan-mihoyo"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bh3scan-sign = { workspace = true }
+
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }

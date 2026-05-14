@@ -1,11 +1,6 @@
 use log::info;
 use std::error::Error;
 
-mod cli;
-mod formatter;
-mod logger;
-mod sdk;
-
 pub fn print_error(err: &dyn Error) {
     eprintln!("Error: {}", err);
 
@@ -18,7 +13,7 @@ pub fn print_error(err: &dyn Error) {
 
 #[tokio::main]
 async fn main() {
-    if let Err(e) = cli::run().await {
+    if let Err(e) = bh3scan::run().await {
         print_error(&e);
         std::process::exit(1);
     }

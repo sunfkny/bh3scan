@@ -1,6 +1,7 @@
-use crate::logger::setup_logger;
-use crate::sdk::mihoyo::ComboLoginResponse;
-use crate::sdk::{bsgame, mihoyo, scanner};
+use bh3scan_logger::setup_logger;
+use bh3scan_bsgame::{BsGameSDK, BsGameSDKErr};
+use bh3scan_mihoyo::{ComboLoginResponse, MihoyoSDK, MihoyoSDKErr};
+use bh3scan_scanner::{ScannerSDK, ScannerSDKErr};
 use arboard::Clipboard;
 use clap::Parser;
 use directories::ProjectDirs;
@@ -50,11 +51,11 @@ pub struct CliArgs {
 #[derive(Error, Debug)]
 pub enum CliError {
     #[error(transparent)]
-    Mihoyo(#[from] mihoyo::MihoyoSDKErr),
+    Mihoyo(#[from] MihoyoSDKErr),
     #[error(transparent)]
-    BsGame(#[from] bsgame::BsGameSDKErr),
+    BsGame(#[from] BsGameSDKErr),
     #[error(transparent)]
-    Scanner(#[from] scanner::ScannerSDKErr),
+    Scanner(#[from] ScannerSDKErr),
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
@@ -80,11 +81,11 @@ pub async fn run() -> Result<(), CliError> {
     let mut password = args.password;
 
     info!("Getting game version");
-    let version = mihoyo::MihoyoSDK::get_version().await?;
+    let version = MihoyoSDK::get_version().await?;
     debug!("version: {}", version);
 
     info!("Getting dispatch");
-    let dispatch = scanner::ScannerSDK::get_query_dispatch(&version).await?;
+    let dispatch = ScannerSDK::get_query_dispatch(&version).await?;
     debug!("dispatch len: {}", dispatch.len());
 
     let ticket = match ticket_arg {
@@ -167,7 +168,7 @@ pub async fn run() -> Result<(), CliError> {
         let password = password.expect("password must be set");
 
         info!("[2/6] Logging in to BiliBili");
-        let resp = bsgame::BsGameSDK::login(&account, &password).await?;
+        let resp = BsGameSDK::login(&account, &password).await?;
         // try to persist login response
         if let Ok(s) = serde_json::to_string(&resp) {
             let _ = fs::write(&login_cache_file, s);
@@ -177,7 +178,7 @@ pub async fn run() -> Result<(), CliError> {
     let LoginResponse { access_key, uid } = serde_json::from_value(login_resp)?;
 
     info!("[3/6] Getting user info");
-    let user_info_resp = bsgame::BsGameSDK::get_user_info(uid, &access_key).await?;
+    let user_info_resp = BsGameSDK::get_user_info(uid, &access_key).await?;
     let UserInfoResponse { uname } = serde_json::from_value(user_info_resp)?;
 
     info!("[4/6] Connecting to game server");
@@ -185,12 +186,12 @@ pub async fn run() -> Result<(), CliError> {
         open_id,
         combo_id,
         combo_token,
-    } = mihoyo::MihoyoSDK::combo_login(uid, &access_key).await?;
+    } = MihoyoSDK::combo_login(uid, &access_key).await?;
 
     info!("[5/6] Sending QR code");
-    match mihoyo::MihoyoSDK::qrcode_scan(&ticket).await {
+    match MihoyoSDK::qrcode_scan(&ticket).await {
         Ok(_) => {}
-        Err(mihoyo::MihoyoSDKErr::QRCodeExpiredError { text }) => {
+        Err(MihoyoSDKErr::QRCodeExpiredError { text }) => {
             warn!("{}", text);
             info!("QR code expired, please input a new ticket");
             loop {
@@ -200,7 +201,7 @@ pub async fn run() -> Result<(), CliError> {
                 io::stdin().read_line(&mut t)?;
                 let t = t.trim().to_string();
                 let t = check_ticket(&t)?;
-                match mihoyo::MihoyoSDK::qrcode_scan(&t).await {
+                match MihoyoSDK::qrcode_scan(&t).await {
                     Ok(_) => break,
                     Err(e) => {
                         eprintln!("Error: {}", e);
@@ -215,7 +216,7 @@ pub async fn run() -> Result<(), CliError> {
     }
 
     info!("[6/6] Confirming login");
-    mihoyo::MihoyoSDK::qrcode_confirm(
+    MihoyoSDK::qrcode_confirm(
         &uname,
         &open_id,
         &combo_id,

@@ -1,4 +1,4 @@
-use crate::sdk::sign::bh3_sign;
+use bh3scan_sign::sign::bh3_sign;
 use log::debug;
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};

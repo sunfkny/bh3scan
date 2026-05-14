@@ -4,17 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-base64 = { workspace = true }
-hex = { workspace = true }
-hmac = { workspace = true }
+bh3scan-sign = { workspace = true }
+bh3scan-mihoyo = { workspace = true }
+bh3scan-scanner = { workspace = true }
+bh3scan-bsgame = { workspace = true }
+bh3scan-logger = { workspace = true }
+
 log = { workspace = true }
-md-5 = { workspace = true }
-rand = { workspace = true }
 reqwest = { workspace = true }
-rsa = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sha2 = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 clap = { workspace = true }
@@ -24,6 +23,4 @@ arboard = { workspace = true }
 zedbar = { workspace = true }
 scrap = { workspace = true }
 directories = { workspace = true }
-log4rs = { workspace = true }
 url = { workspace = true }
-webbrowser = { workspace = true }

@@ -252,28 +252,85 @@ name = "bh3scan"
 version = "0.1.0"
 dependencies = [
  "arboard",
- "base64",
+ "bh3scan-bsgame",
+ "bh3scan-logger",
+ "bh3scan-mihoyo",
+ "bh3scan-scanner",
+ "bh3scan-sign",
  "clap",
  "directories",
- "hex",
- "hmac",
  "image",
  "log",
- "log4rs",
- "md-5",
- "rand 0.10.0",
  "reqwest",
  "rpassword",
- "rsa",
  "scrap",
  "serde",
  "serde_json",
- "sha2",
  "thiserror 2.0.18",
  "tokio",
  "url",
- "webbrowser",
  "zedbar",
+]
+
+[[package]]
+name = "bh3scan-bsgame"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "hex",
+ "log",
+ "md-5",
+ "rand 0.10.0",
+ "reqwest",
+ "rsa",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "webbrowser",
+]
+
+[[package]]
+name = "bh3scan-logger"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "log4rs",
+]
+
+[[package]]
+name = "bh3scan-mihoyo"
+version = "0.1.0"
+dependencies = [
+ "bh3scan-sign",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "bh3scan-scanner"
+version = "0.1.0"
+dependencies = [
+ "bh3scan-sign",
+ "log",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "bh3scan-sign"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "hmac",
+ "log",
+ "serde",
+ "serde_json",
+ "sha2",
 ]
 
 [[package]]
