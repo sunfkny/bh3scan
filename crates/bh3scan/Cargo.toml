@@ -21,6 +21,6 @@ rpassword = { workspace = true }
 image = { workspace = true }
 arboard = { workspace = true }
 zedbar = { workspace = true }
-scrap = { workspace = true }
+xcap = { workspace = true }
 directories = { workspace = true }
 url = { workspace = true }
