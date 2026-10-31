@@ -400,7 +400,7 @@ checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
 name = "bh3scan"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "arboard",
  "bh3scan-bsgame",
@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "bh3scan-bsgame"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "base64",
  "hex",
@@ -442,7 +442,7 @@ dependencies = [
 
 [[package]]
 name = "bh3scan-logger"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "log",
  "log4rs",
@@ -450,7 +450,7 @@ dependencies = [
 
 [[package]]
 name = "bh3scan-mihoyo"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bh3scan-sign",
  "log",
@@ -462,7 +462,7 @@ dependencies = [
 
 [[package]]
 name = "bh3scan-scanner"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bh3scan-sign",
  "log",
@@ -474,7 +474,7 @@ dependencies = [
 
 [[package]]
 name = "bh3scan-sign"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "hex",
  "hmac",
