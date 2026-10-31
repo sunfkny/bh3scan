@@ -2,6 +2,7 @@
 name = "bh3scan"
 version = "0.2.0"
 edition = "2024"
+repository = "https://github.com/sunfkny/bh3scan"
 
 [dependencies]
 bh3scan-sign = { workspace = true }

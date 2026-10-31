@@ -41,3 +41,6 @@ opt-level = "z"
 lto = true
 strip = true
 panic = 'abort'
+
+[profile.dist]
+inherits = "release"
