@@ -1,4 +1,4 @@
-use hmac::{Hmac, Mac, KeyInit};
+use hmac::{Hmac, KeyInit, Mac};
 use log::trace;
 use sha2::Sha256;
 
