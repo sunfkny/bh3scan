@@ -1,8 +1,8 @@
-use bh3scan_logger::setup_logger;
+use arboard::Clipboard;
 use bh3scan_bsgame::{BsGameSDK, BsGameSDKErr};
+use bh3scan_logger::setup_logger;
 use bh3scan_mihoyo::{ComboLoginResponse, MihoyoSDK, MihoyoSDKErr};
 use bh3scan_scanner::{ScannerSDK, ScannerSDKErr};
-use arboard::Clipboard;
 use clap::Parser;
 use directories::ProjectDirs;
 use image::{GrayImage, ImageBuffer};
@@ -266,38 +266,43 @@ fn get_qr_from_screen() -> Result<Option<String>, CliError> {
     let start = std::time::Instant::now();
     let timeout = Duration::from_secs(300);
 
-    // Get all displays and create capturers first
-    let displays = match scrap::Display::all() {
-        Ok(displays) => displays,
-        Err(e) => {
-            warn!("Failed to get displays: {}", e);
-            return Ok(None);
-        }
-    };
-
-    let mut capturers = Vec::new();
-    for display in displays {
-        match scrap::Capturer::new(display) {
-            Ok(capturer) => {
-                let width = capturer.width();
-                let height = capturer.height();
-                debug!("Created screen capturer: {}x{}", width, height);
-                capturers.push((capturer, width, height));
-            }
-            Err(e) => warn!("Failed to create capturer: {}", e),
-        }
-    }
-    debug!("Created {} capturers", capturers.len());
+    let initial_capturers = create_capturers();
+    let mut capturers = initial_capturers.capturers;
+    let mut recreate_capturers = initial_capturers.failed_displays > 0;
     info!("Waiting for QR code on screen...");
 
-    if capturers.is_empty() {
+    if !capturers.iter().flatten().next().is_some() {
         warn!("No valid screen capturers created");
         return Ok(None);
     }
 
     let frame_wait = Duration::from_millis(1);
+    let recovery_wait = Duration::from_millis(500);
+    let mut interruption_logged = false;
     loop {
-        for (pos, (capturer, width, height)) in capturers.iter_mut().enumerate() {
+        if recreate_capturers {
+            if start.elapsed() > timeout {
+                debug!("Screen capture timeout after {}s", timeout.as_secs());
+                return Ok(None);
+            }
+
+            debug!("Screen capture session was interrupted; recreating capturers");
+            let creation = refresh_capturers(capturers);
+            recreate_capturers = creation.failed_displays > 0;
+            if !creation.capturers.iter().flatten().next().is_some() {
+                debug!("Screen capturers are still unavailable");
+            } else if recreate_capturers {
+                info!("Screen capture partially recovered; waiting for QR code on screen...");
+            } else {
+                info!("Screen capture recovered; waiting for QR code on screen...");
+            }
+            capturers = creation.capturers;
+        }
+
+        for (pos, slot) in capturers.iter_mut().enumerate() {
+            let Some((capturer, width, height)) = slot.as_mut() else {
+                continue;
+            };
             debug!("Trying capturer {} ({},{})", pos, *width, *height);
             'inner: loop {
                 if start.elapsed() > timeout {
@@ -320,18 +325,126 @@ fn get_qr_from_screen() -> Result<Option<String>, CliError> {
                             sleep(frame_wait);
                             continue 'inner;
                         }
+                        if is_recoverable_capture_error(&e) {
+                            // Windows switches to a secure desktop for UAC and other elevated
+                            // prompts. Desktop Duplication then loses access to the output and
+                            // can return DXGI_ERROR_INVALID_CALL ("invalid data"). Recreate the
+                            // capturers after the secure desktop closes instead of warning on
+                            // every frame.
+                            if !interruption_logged {
+                                info!(
+                                    "Screen capture was interrupted (for example by a UAC prompt); waiting for it to become available again: {}",
+                                    e
+                                );
+                                interruption_logged = true;
+                            } else {
+                                debug!("Screen capture still interrupted: {}", e);
+                            }
+                            *slot = None;
+                            recreate_capturers = true;
+                            break;
+                        }
                         warn!("Failed to capture frame: {}", e);
                     }
                 }
                 break 'inner;
             }
+
+            if recreate_capturers {
+                break;
+            }
         }
 
-        let elapsed = start.elapsed().as_secs_f64();
-        let delay_secs = (0.1 * 2f64.powf(elapsed / (60.0 / f64::log2(10.0)))).min(300.0);
-        debug!("Sleeping for {:.2}s before next capture", delay_secs);
-        sleep(Duration::from_secs_f64(delay_secs));
+        if recreate_capturers {
+            sleep(recovery_wait);
+        } else {
+            let elapsed = start.elapsed().as_secs_f64();
+            let delay_secs = (0.1 * 2f64.powf(elapsed / (60.0 / f64::log2(10.0)))).min(300.0);
+            debug!("Sleeping for {:.2}s before next capture", delay_secs);
+            sleep(Duration::from_secs_f64(delay_secs));
+        }
     }
+}
+
+type ScreenCapturer = (scrap::Capturer, usize, usize);
+
+struct CapturerCreation {
+    capturers: Vec<Option<ScreenCapturer>>,
+    failed_displays: usize,
+}
+
+fn create_capturers() -> CapturerCreation {
+    refresh_capturers(Vec::new())
+}
+
+fn refresh_capturers(mut capturers: Vec<Option<ScreenCapturer>>) -> CapturerCreation {
+    let displays = match scrap::Display::all() {
+        Ok(displays) => displays,
+        Err(e) => {
+            warn!("Failed to get displays: {}", e);
+            let failed_displays = capturers
+                .iter()
+                .filter(|capturer| capturer.is_none())
+                .count()
+                .max(1);
+
+            return CapturerCreation {
+                capturers,
+                failed_displays,
+            };
+        }
+    };
+
+    if capturers.len() != displays.len() {
+        while capturers.len() < displays.len() {
+            capturers.push(None);
+        }
+        capturers.truncate(displays.len());
+    }
+
+    let mut failed_displays = 0;
+    for (slot, display) in capturers.iter_mut().zip(displays) {
+        let width = display.width();
+        let height = display.height();
+
+        if let Some((_, old_width, old_height)) = slot.as_ref()
+            && *old_width == width
+            && *old_height == height
+        {
+            continue;
+        }
+
+        // Release an invalid capturer before creating its replacement.
+        *slot = None;
+        match scrap::Capturer::new(display) {
+            Ok(capturer) => {
+                debug!("Created screen capturer: {}x{}", width, height);
+                *slot = Some((capturer, width, height));
+            }
+            Err(e) => {
+                warn!("Failed to create capturer: {}", e);
+            }
+        }
+        failed_displays += slot.is_none() as usize;
+    }
+
+    let created_count = capturers.iter().flatten().count();
+    debug!("Created {} capturers", created_count);
+    CapturerCreation {
+        capturers,
+        failed_displays,
+    }
+}
+
+fn is_recoverable_capture_error(error: &std::io::Error) -> bool {
+    matches!(
+        error.kind(),
+        std::io::ErrorKind::ConnectionReset
+            | std::io::ErrorKind::PermissionDenied
+            | std::io::ErrorKind::InvalidData
+            | std::io::ErrorKind::Interrupted
+            | std::io::ErrorKind::ConnectionAborted
+    )
 }
 
 fn decode_qr_from_arboard_image(img: &arboard::ImageData) -> Option<String> {
@@ -381,4 +494,28 @@ fn extract_ticket(s: String) -> Option<String> {
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_recoverable_capture_error;
+    use std::io::ErrorKind;
+
+    #[test]
+    fn secure_desktop_capture_errors_are_recoverable() {
+        for kind in [
+            ErrorKind::ConnectionReset,
+            ErrorKind::PermissionDenied,
+            ErrorKind::InvalidData,
+            ErrorKind::Interrupted,
+            ErrorKind::ConnectionAborted,
+        ] {
+            assert!(is_recoverable_capture_error(&kind.into()));
+        }
+    }
+
+    #[test]
+    fn unexpected_capture_errors_are_not_recoverable() {
+        assert!(!is_recoverable_capture_error(&ErrorKind::Other.into()));
+    }
 }
