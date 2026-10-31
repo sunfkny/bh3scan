@@ -350,7 +350,7 @@ fn get_qr_from_screen() -> Result<Option<String>, CliError> {
                 break 'inner;
             }
 
-            if recreate_capturers {
+            if slot.is_none() {
                 break;
             }
         }
@@ -378,6 +378,7 @@ fn create_capturers() -> CapturerCreation {
 }
 
 fn refresh_capturers(mut capturers: Vec<Option<ScreenCapturer>>) -> CapturerCreation {
+    let retrying = !capturers.is_empty();
     let displays = match scrap::Display::all() {
         Ok(displays) => displays,
         Err(e) => {
@@ -422,7 +423,11 @@ fn refresh_capturers(mut capturers: Vec<Option<ScreenCapturer>>) -> CapturerCrea
                 *slot = Some((capturer, width, height));
             }
             Err(e) => {
-                warn!("Failed to create capturer: {}", e);
+                if retrying {
+                    debug!("Failed to create capturer: {}", e);
+                } else {
+                    warn!("Failed to create capturer: {}", e);
+                }
             }
         }
         failed_displays += slot.is_none() as usize;
