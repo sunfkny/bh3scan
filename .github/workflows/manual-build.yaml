@@ -1,0 +1,53 @@
+name: Manual Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Rust target triple"
+        required: true
+        default: x86_64-pc-windows-msvc
+        type: choice
+        options:
+          - x86_64-pc-windows-msvc
+      cargo_args:
+        description: "Extra cargo args"
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.target }}-${{ github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build - ${{ inputs.target }}
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Checkout repository
+        # v6.0.3
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: stable
+          targets: ${{ inputs.target }}
+
+      - name: Build binary
+        run: cargo build --locked --release --target ${{ inputs.target }} ${{ inputs.cargo_args }}
+
+      - name: Upload artifact
+        # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bh3scan-${{ inputs.target }}
+          path: target/${{ inputs.target }}/release/bh3scan.exe
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 9
