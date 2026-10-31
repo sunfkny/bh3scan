@@ -20,6 +20,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ inputs.target }}-${{ github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build - ${{ inputs.target }}
@@ -30,21 +33,22 @@ jobs:
       CARGO_TERM_COLOR: always
     steps:
       - name: Checkout repository
-        # v6.0.3
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: stable
           targets: ${{ inputs.target }}
 
       - name: Build binary
-        run: cargo build --locked --release --target ${{ inputs.target }} ${{ inputs.cargo_args }}
+        shell: pwsh
+        run: cargo build --locked --release --target "${{ inputs.target }}" ${{ inputs.cargo_args }}
 
       - name: Upload artifact
-        # v7.0.1
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: bh3scan-${{ inputs.target }}
           path: target/${{ inputs.target }}/release/bh3scan.exe
